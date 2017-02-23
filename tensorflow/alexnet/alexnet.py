@@ -217,13 +217,13 @@ def main(_):
             worker_device="/job:worker/task:%d" % FLAGS.task_id,
             cluster=cluster)):
 
-            summary_op = tf.merge_all_summaries()
+            summary_op = tf.summary.merge_all()
             
             y, x = get_graph()
             
             y_ = tf.placeholder(tf.float32, [None, NUM_LABELS])
             
-            cross_entropy = tf.reduce_mean( -tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]) )
+            cross_entropy = tf.reduce_mean( -tf.reduce_sum(y_ * tf.log(y), axis=[1]) )
             
             global_step = tf.Variable(0)
             
@@ -231,7 +231,7 @@ def main(_):
             
             num_workers = len(worker_hosts)
             sync_rep_opt = tf.train.SyncReplicasOptimizer(gradient_descent_opt, replicas_to_aggregate=num_workers,
-                    replica_id=FLAGS.task_id, total_num_replicas=num_workers)
+                    total_num_replicas=num_workers)
             
             train_op = sync_rep_opt.minimize(cross_entropy, global_step=global_step)
             
@@ -239,9 +239,9 @@ def main(_):
             chief_queue_runner = sync_rep_opt.get_chief_queue_runner()
             
             #saver = tf.train.Saver()
-            summary_op = tf.merge_all_summaries()
+            summary_op = tf.summary.merge_all()
 
-            init_op = tf.initialize_all_variables()
+            init_op = tf.global_variables_initializer()
             saver = tf.train.Saver()
         
         is_chief=(FLAGS.task_id == 0)

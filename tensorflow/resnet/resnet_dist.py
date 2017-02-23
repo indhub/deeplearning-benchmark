@@ -97,14 +97,14 @@ def main(_):
             
             num_workers = len(worker_hosts)
             sync_rep_opt = tf.train.SyncReplicasOptimizer(gradient_descent_opt, replicas_to_aggregate=num_workers,
-                    replica_id=FLAGS.task_id, total_num_replicas=num_workers)
+                    total_num_replicas=num_workers)
             
             train_op = sync_rep_opt.minimize(cross_entropy, global_step=global_step)
             
             init_token_op = sync_rep_opt.get_init_tokens_op()
             chief_queue_runner = sync_rep_opt.get_chief_queue_runner()
             
-            init_op = tf.initialize_all_variables()
+            init_op = tf.global_variables_initializer()
         
         is_chief=(FLAGS.task_id == 0)
             

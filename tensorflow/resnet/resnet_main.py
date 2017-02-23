@@ -57,7 +57,7 @@ def train(hps):
   images, labels = synthetic_data(hps.batch_size)
   model = resnet_model.ResNet(hps, images, labels, FLAGS.mode)
   model.build_graph()
-  summary_writer = tf.train.SummaryWriter(FLAGS.train_dir)
+  summary_writer = tf.summary.FileWriter(FLAGS.train_dir)
 
   sv = tf.train.Supervisor(logdir=FLAGS.log_root,
                            is_chief=True,
@@ -110,7 +110,7 @@ def evaluate(hps):
   model = resnet_model.ResNet(hps, images, labels, FLAGS.mode)
   model.build_graph()
   saver = tf.train.Saver()
-  summary_writer = tf.train.SummaryWriter(FLAGS.eval_dir)
+  summary_writer = tf.summary.FileWriter(FLAGS.eval_dir)
 
   sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
   tf.train.start_queue_runners(sess)

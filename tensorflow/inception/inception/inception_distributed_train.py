@@ -135,7 +135,7 @@ def train(target, dataset, cluster_spec):
                                       FLAGS.learning_rate_decay_factor,
                                       staircase=True)
       # Add a summary to track the learning rate.
-      tf.scalar_summary('learning_rate', lr)
+      tf.summary.scalar('learning_rate', lr)
 
       # Create an optimizer that performs gradient descent.
       opt = tf.train.RMSPropOptimizer(lr,
@@ -173,8 +173,8 @@ def train(target, dataset, cluster_spec):
           loss_name = l.op.name
           # Name each loss as '(raw)' and name the moving average version of the
           # loss as the original loss name.
-          tf.scalar_summary(loss_name + ' (raw)', l)
-          tf.scalar_summary(loss_name, loss_averages.average(l))
+          tf.summary.scalar(loss_name + ' (raw)', l)
+          tf.summary.scalar(loss_name, loss_averages.average(l))
 
         # Add dependency to compute loss_averages.
         with tf.control_dependencies([loss_averages_op]):
@@ -193,13 +193,12 @@ def train(target, dataset, cluster_spec):
 
       # Add histograms for model variables.
       for var in variables_to_average:
-        tf.histogram_summary(var.op.name, var)
+        tf.summary.histogram(var.op.name, var)
 
       # Create synchronous replica optimizer.
       opt = tf.train.SyncReplicasOptimizer(
           opt,
           replicas_to_aggregate=num_replicas_to_aggregate,
-          replica_id=FLAGS.task_id,
           total_num_replicas=num_workers,
           variable_averages=exp_moving_averager,
           variables_to_average=variables_to_average)
@@ -217,7 +216,7 @@ def train(target, dataset, cluster_spec):
       # Add histograms for gradients.
       for grad, var in grads:
         if grad is not None:
-          tf.histogram_summary(var.op.name + '/gradients', grad)
+          tf.summary.histogram(var.op.name + '/gradients', grad)
 
       apply_gradients_op = opt.apply_gradients(grads, global_step=global_step)
 
@@ -229,16 +228,16 @@ def train(target, dataset, cluster_spec):
       # More details can be found in sync_replicas_optimizer.
       chief_queue_runners = [opt.get_chief_queue_runner()]
       init_tokens_op = opt.get_init_tokens_op()
-      clean_up_op = opt.get_clean_up_op()
+      #clean_up_op = opt.get_clean_up_op()
 
       # Create a saver.
       saver = tf.train.Saver()
 
       # Build the summary operation based on the TF collection of Summaries.
-      summary_op = tf.merge_all_summaries()
+      summary_op = tf.summary.merge_all()
 
       # Build an initialization operation to run below.
-      init_op = tf.initialize_all_variables()
+      init_op = tf.global_variables_initializer()
 
       # We run the summaries in the same thread as the training operations by
       # passing in None for summary_op to avoid a summary_thread being started.
@@ -330,7 +329,7 @@ def train(target, dataset, cluster_spec):
         except:
           if is_chief:
             tf.logging.info('About to execute sync_clean_up_op!')
-            sess.run(clean_up_op)
+            #sess.run(clean_up_op)
           raise
 
       # Stop the supervisor.  This also waits for service threads to finish.
